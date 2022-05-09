@@ -1,186 +1,47 @@
-// export
-let elementToHTML = {
-    div: [
-        {
-            span: {
-                textContent: "Teste 1"
-            }
-        },
-        {
-            span: {
-                textContent: "Teste 2"
-            }
-        }
-    ]
-}
-
-function createElementHTML(element) {
-    return verification(element);
-}
-
-function verification(element, text) {
-    console.log(element, text)
-    if (Array.isArray(element)) {
-        element.forEach(item => verification(item, "item"));
-    }
-    if (element.div) {
-        verification (element.div, "div")
-    }
-    else {
-        return element;
-    }
-}
-
-console.log(createElementHTML(elementToHTML))
-// console.log(Array.isArray(element.div))
-
-
-
-
-
-
-
-
-
-
-
-
-// function createDivElement() {}
-// function createSectionElement() {}
-// function createSpanElement() {}
-// function createLabelElement() {}
-// function createh3Element() {}
-// function createSelectElement() {}
-// function createOptionElement() {}
-
-
-// console.log( Array.isArray(teste) );
-
-
-
-// <div>
-//     <section></section>
-//     <section></section>
-// </div>
-
-
-// section : [{}, {}]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-function createSpanElement(textContent) {
-    const span = document.createElement('span');
-    span.textContent = textContent;
-
-    return span;
-};
-
-function createDivElement() {
-    const div = document.createElement('div');
-    div.classList.add("config");
-
-    defaultDiv.forEach(sectionObj => {
-        div.appendChild( this.createSectionElement(sectionObj) )
-    });
-
-    div.addEventListener('change', event => {
-        if (event.target.value != "") {
-            this[event.target.name] = event.target.value;
-        }
-        else {
-            event.target.value = this[event.target.name];
-        }
-    });
-
-    return div;
-};
-
-function createSectionElement(sectionObj) {
-    const section = document.createElement('section');
-    section.classList.add(sectionObj.class);
-
-    if (sectionObj.h3) section.appendChild( this.createH3Element(sectionObj.h3) );
-    if (sectionObj.span) section.appendChild( this.createSpanElement(sectionObj.span) );
-
-    if (sectionObj.label) {
-        const labels = this.createLabelElement(sectionObj.label);
-        labels.forEach(label => section.appendChild(label));
-    }
-    if (sectionObj.select) section.appendChild( this.createSelectElement(sectionObj.select) );
-    if (sectionObj.textarea) section.appendChild( this.createTextAreaElement(sectionObj.textarea) );
+export function createElementHTML(type, args) {
+    const elemTypes = ["section", "div", "h3", "span", "label", "input", "select", "option", "textarea", "p"];
+    const propTypes = ["class", "rows", "id", "name", "type",  "placeholder"];
+    const especialPropType = ["textContent", "value"];
     
+    if (!type || type == "") return console.error("ERROR: You didn't specify the type");
+    if (typeof type != 'string' || !elemTypes.includes(type)) return console.error("ERROR: You have specified an invalid type or that has not yet been deployed");
+    let element = document.createElement(type);
 
-    return section;
-};
+    if (!args || args == "" || typeof args != 'object') console.warn("Alert: You don't added a valid argument!");
+    else if (Array.isArray(args)) {
+        args.forEach(arg => {
 
-function createH3Element({textContent, class: className}) {
-    const h3 = document.createElement('h3');
-    h3.classList.add(className);
-    h3.textContent = textContent;
+            if (typeof arg != 'object' || Array.isArray(arg)) console.warn("ALERT: Your array can contain only objects");
+            let elemOfArr = createElementHTML(type, arg);
+            if (elemOfArr || elemOfArr != "") element.appendChild(elemOfArr);
+        });
+    }
+    else if (typeof args == 'object') {
+        let objPropNames = Object.getOwnPropertyNames(args);
+        objPropNames.forEach(prop => {
+            if (elemTypes.includes(prop)) {
+                if (Array.isArray(args[prop])) {
+                    args[prop].forEach(argProp => {
+                        let elemOfElem =  createElementHTML(prop, argProp);
+                        if (elemOfElem || elemOfElem != "") { element.appendChild(elemOfElem) }
+                        else (console.warn("ALERT: In your arguments have a error!"));
+                    });
+                } else {
+                    let elemOfElem = createElementHTML(prop, args[prop]);
+                    if (elemOfElem || elemOfElem != "") { element.appendChild(elemOfElem) }
+                    else (console.warn("ALERT: In your arguments have a error!"));
+                }
+            }
+            else if (propTypes.includes(prop)) {
+                element.setAttribute(prop, args[prop]);
+            }
+            else if (especialPropType.includes(prop)) {
+                element[prop] = args[prop];
+            }
+            else console.warn("ALERT: You type a invalid property")
+        });
+    }
+    else { console.error("ERROR! Don't specified!"); }
 
-    return h3;
-};
-
-function createLabelElement(labelArr) {
-    const labelReturned = [];
-    labelArr.forEach(([name, textContent, type]) => {
-        const label = document.createElement('label');
-        const input = document.createElement('input');
-
-        label.textContent = textContent + ": ";
-        input.name = name;
-        input.type = type;
-        label.appendChild(input);
-        labelReturned.push(label);
-    });
-
-    return labelReturned;
-};
-
-function createSelectElement({name, labelContent, options}) {
-    const select = document.createElement('select');
-    const label = document.createElement('label');
-
-    label.appendChild(this.createSpanElement(labelContent + ": "))
-    options.forEach(option => select.appendChild(this.createOptionElement(option)));
-    label.appendChild(select);
-
-    return label;
-};
-
-function createOptionElement({value, textContent}) {
-    const option = document.createElement('option');
-    option.value = value;
-    option.textContent = textContent;
-    
-    return option;
-};
-
-function createTextAreaElement({name, rows, placeholder}) {
-    const textarea = document.createElement('textarea');
-    textarea.name = name;
-    textarea.rows = rows;
-    textarea.placeholder = placeholder;
-
-    return textarea;
+    return element;
 }
